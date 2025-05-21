@@ -1,0 +1,100 @@
+
+shopping_list = []
+allowed_clothing_items = ["t-shirt", "jeans", "jacket", "sweater", "dress", "shoes", "hat", "scarf",
+                          "graphic shirt", "polo shirt", "suit", "baggy pants", "jorts"]
+
+def showMenu():
+    print("Welcome to your Clothing Shopping List!")
+    print("What would you like to do?")
+    print("""
+Enter HELP to see the menu.
+Enter SHOW to view your shopping list with prices.
+Enter ADD to add a clothing item with its price to the list.
+Enter REMOVE to remove an item from the list.
+Enter CLEAR to clear the list.
+Enter QUIT to end the shopping session.
+""")
+
+def addItem():
+    item = input("Enter clothing item to add (e.g., T-shirt, Jeans, Jacket): ").strip().lower()  # Ask for the item name
+    if item in allowed_clothing_items:  # Check if the item is in the list of allowed clothing items
+        try:
+            # Ask for the price of the item and turn it into a number
+            price = float(input(f"Enter the price of '{item}': $"))
+            # Error: Misspelled variable name (price is spelled incorrectly)
+            shopping_list.append({"item": item, "price": pric})  # Typo in 'pric' instead of 'price'
+            print(f"'{item}' with price ${price} has been added to your list.\n")
+        except ValueError:
+            # If the price is not a valid number, show an error
+            print("Error: Please enter a valid price (e.g., 10.99).\n")
+    else:
+        # If the item is not allowed (not clothing), show an error message
+        print(f"Error: '{item}' is not a valid clothing item. Please add clothing items like T-shirt, Jeans, Jacket, etc.\n")
+
+# This function shows the list of items with their prices
+def showList():
+    if len(shopping_list) > 0:  # If there are items in the list
+        print("Here is your shopping list with prices:")
+        total_price = 0  # Start with a total price of 0
+        # Error: Missing parentheses on print function in the loop (Python 3 issue)
+        for i in range(len(shopping_list)):
+            item = shopping_list[i]["item"]
+            price = shopping_list[i]["price"]
+            # Show the item and its price (this print function is incorrect in Python 3)
+            print(f"{i + 1}. {item} - ${price}"  # Error: Missing closing parenthesis
+            # Add the price to the total price
+            total_price += price
+        # Show the total price of all items
+        print(f"Total price: ${total_price}\n")
+    else:
+        # If the list is empty, tell the user
+        print("Error: Your shopping list is empty. Add items before showing the list.\n")
+
+# This function removes an item from the list
+def removeItem():
+    showList()  # First, show the list so the user knows what to remove
+    item_number = input("Enter the number of the item to remove: ")  # Ask for the item number
+    if item_number.isdigit():  # If the input is a valid number
+        item_number = int(item_number)  # Change the input to a number
+        if item_number > 0 and item_number <= len(shopping_list):
+            # Remove the item from the list if the number is correct
+            removed_item = shopping_list.pop(item_number - 1)
+            print(f"'{removed_item['item']}' has been removed from your list.\n")
+        else:
+            # Error: Incorrect logic to check for valid item number
+            print("Error: That item number doesn't exist. Please enter a valid item number.\n")
+    else:
+        # If the input is not a number, show an error
+        print("Error: Please enter a valid number to remove the item.\n")
+
+# This function clears all items from the list
+def clearList():
+    shopping_list.clear()  # Remove all items from the list
+    print("The shopping list has been cleared.\n")
+
+# This is the main function that runs the program
+def main():
+    showMenu()  # Show the menu when the program starts
+    while True:  # Keep running until the user quits
+        command = input("Enter a command: ").strip().upper()  # Get user input and make it uppercase
+        if command == "HELP":
+            showMenu()  # Show the menu again
+        elif command == "SHOW":
+            showList()  # Show the shopping list
+        elif command == "ADD":
+            addItem()  # Add a new clothing item to the list
+        elif command == "REMOVE":
+            removeItem()  # Remove an item from the list
+        elif command == "CLEAR":
+            clearList()  # Clear the entire list
+        elif command == "QUIT":
+            # End the program
+            print("Goodbye! Thanks for using the clothing shopping list.")
+            break
+        else:
+            # Error: Misspelled "Sorry" in the else statement
+            print("Errror: Sorry, I didn't understand that. Please try again with a valid command.\n")
+
+# Start the program by calling the main function
+main()
+
