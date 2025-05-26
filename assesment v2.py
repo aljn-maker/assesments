@@ -23,7 +23,7 @@ def show_items():
     message += f"\nTotal: ${total:.2f}"
     eg.msgbox(message, title="Your Shopping List")
 
-# 🟩 Add a new clothing item
+# Add a new clothing item
 def add_new_item():
     item_name = eg.enterbox("Enter a clothing item to add:", title="Add Item")
     if item_name:
@@ -40,7 +40,7 @@ def add_new_item():
         else:
             eg.msgbox("That is not a valid clothing item.", title="Not Allowed")
 
-# 🟥 Remove an item from the list
+# Remove an item from the list
 def remove_item():
     if not shopping_list:
         eg.msgbox("Your shopping list is empty.", title="Remove Item")
