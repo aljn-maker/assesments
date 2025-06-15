@@ -2,8 +2,8 @@ import easygui as eg
 
 # --------- User Data ---------
 valid_users = {
-    "alice": "pass123",
-    "bob": "secure456"
+    "prince": "pass_13",
+    "allen": "oblak456__"
 }
 
 def sign_up():
