@@ -1,0 +1,258 @@
+import easygui as eg
+import json
+import hashlib
+import os
+
+
+def add_to_list():
+    shopping_list = shopping_lists.get(current_user, [])
+
+    allowed_sizes = ["XS", "S", "M", "L", "XL", "XXL"]
+
+    item_name = eg.enterbox("Enter a clothing item:", "Add Item")
+    if not item_name:
+        return
+
+    item_name = item_name.strip().lower()
+    if item_name not in allowed_items:
+        eg.msgbox(f"'{item_name}' is not valid.\nAllowed items: {', '.join(allowed_items)}", "Invalid Item")
+        return
+
+    size = eg.choicebox("Select size for the item:", "Choose Size", allowed_sizes)
+    if size is None:
+        return
+
+    while True:
+        price_input = eg.enterbox(f"Enter the price for '{item_name.title()}' (Size: {size}):", "Item Price")
+        if price_input is None:
+            return
+        try:
+            price = float(price_input)
+            if price < 0:
+                eg.msgbox("Price cannot be negative.", "That Price is not allowed")
+            else:
+                break
+        except ValueError:
+            eg.msgbox("Enter a number, example: 19.99", "Error")
+
+    shopping_list.append({"name": item_name, "size": size, "price": price})  # include size
+    shopping_lists[current_user] = shopping_list
+    save_shopping()
+    eg.msgbox(f"'{item_name.title()}' (Size: {size}) added for ${price:.2f}.", "Item Added")
+
+
+def show_list():
+    shopping_list = shopping_lists.get(current_user, [])
+    if not shopping_list:
+        eg.msgbox("Your shopping cart 🛒 is empty.", "Shopping List")
+        return
+
+    total = 0
+    message = ""
+    for i, item in enumerate(shopping_list, start=1):
+        size = item.get("size", "N/A")  # handles older entries without size
+        message += f"{i}. {item['name'].title()} (Size: {size}) - ${item['price']:.2f}\n"
+        total += item['price']
+
+    message += f"\nTotal Price: ${total:.2f}"
+    eg.msgbox(message, "Your Shopping Cart List")
+
+
+#  File paths
+USERS_FILE = "users.json"
+SHOPPING_FILE = "shopping_lists.json"
+
+#save the account
+def load_json(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_json(file_path, data):
+    with open(file_path, "w") as f:
+        json.dump(data, f, indent=4)
+
+# Load users and shopping lists on program start
+users = load_json(USERS_FILE)  # username -> hashed password
+shopping_lists = load_json(SHOPPING_FILE)  # username -> list of items
+
+# hashing the password
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+# you have to create account to sign up
+def create_account():
+    while True:
+        new_info = eg.multpasswordbox("Create your account:", "Sign Up", ["Username", "Password", "Confirm Password"])
+        if new_info is None:
+            return False
+
+        username, password, confirm = new_info
+        username = username.strip().lower()
+
+        if not username or not password or not confirm:
+            eg.msgbox("Fields cannot be empty.", "Error")
+        elif username in users:
+            eg.msgbox("That username already exists. Try another one.", "Error")
+        elif password != confirm:
+            eg.msgbox("Passwords do not match.", "Error")
+        else:
+            users[username] = hash_password(password)
+            shopping_lists[username] = []  # Create empty shopping list for new user
+            save_json(USERS_FILE, users)
+            save_json(SHOPPING_FILE, shopping_lists)
+            eg.msgbox(f"Account '{username}' created! You can now log in.", "Success")
+            return True
+
+# this is log in
+def sign_in():
+    tries = 0
+    while tries < 3:
+        info = eg.multpasswordbox("Log in to continue:", "Sign In", ["Username", "Password"])
+        if info is None:
+            return None
+
+        username, password = info
+        username = username.strip().lower()
+
+        hashed = hash_password(password)
+        if username in users and users[username] == hashed:
+            eg.msgbox(f"Welcome, {username.title()}!", "Login Successful")
+            return username
+        else:
+            tries += 1
+            eg.msgbox("Wrong username or password. Try again.", "Login Failed")
+
+    eg.msgbox("Too many failed attempts. Goodbye.", "Access Denied")
+    return None
+
+#items that allowed in my  clothing website
+allowed_items = [
+    "t-shirt", "jeans", "jacket", "sweater", "dress", "shoes", "hat", "scarf",
+    "graphic shirt", "polo shirt", "suit", "baggy pants", "jorts", "shorts"
+]
+
+# Current logged in user will be stored here
+current_user = None
+
+def save_shopping():
+    shopping_lists[current_user] = shopping_lists.get(current_user, [])
+    save_json(SHOPPING_FILE, shopping_lists)
+
+def remove_from_list():
+    shopping_list = shopping_lists.get(current_user, [])
+    if not shopping_list:
+        eg.msgbox("List is empty!", "Remove Item")
+        return
+
+    items_display = [f"{i+1}. {item['name'].title()} - ${item['price']:.2f}" for i, item in enumerate(shopping_list)]
+    choice = eg.choicebox("Select item to remove:", "Remove Item", choices=items_display)
+    if choice:
+        index = items_display.index(choice)
+        removed_item = shopping_list.pop(index)
+        shopping_lists[current_user] = shopping_list
+        save_shopping()
+        eg.msgbox(f"Removed '{removed_item['name'].title()}' from the list.", "Removed")
+
+def clear_list():
+    shopping_list = shopping_lists.get(current_user, [])
+    if not shopping_list:
+        eg.msgbox("List already empty.", "Clear List")
+        return
+
+    if eg.ynbox("Clear the whole list?", "Confirm"):
+        shopping_lists[current_user] = []
+        save_shopping()
+        eg.msgbox("List cleared.", "Done")
+
+def edit_price():
+    shopping_list = shopping_lists.get(current_user, [])
+    if not shopping_list:
+        eg.msgbox("there is no need to edit!", "Edit Price")
+        return
+
+    items_display = [f"{i+1}. {item['name'].title()} - ${item['price']:.2f}" for i, item in enumerate(shopping_list)]
+    choice = eg.choicebox("Select item to edit price:", "Edit Item", choices=items_display)
+    if choice:
+        index = items_display.index(choice)
+        item = shopping_list[index]
+        new_price = eg.enterbox(f"Enter new price for {item['name'].title()}:", "Edit Price")
+        if new_price:
+            try:
+                new_price_val = float(new_price)
+                if new_price_val < 0:
+                    eg.msgbox("Price cannot be negative.", "Invalid Price")
+                    return
+                item['price'] = new_price_val
+                shopping_lists[current_user] = shopping_list
+                save_shopping()
+                eg.msgbox("Price updated!", "Success")
+            except ValueError:
+                eg.msgbox("Invalid number.", "Error")
+
+def show_help():
+    help_message = (
+        "instructions how to use shopping clothing program\n\n"
+        "Add clothing items only from the allowed list\n"
+        "Each must have a price (e.g., 12.99)\n"
+        "View your full list anytime\n"
+        "Remove or clear all items\n"
+        "You can also edit prices.\n\n"
+        "Allowed Items:\n" + ", ".join(allowed_items)
+    )
+    eg.msgbox(help_message, "Help")
+
+def open_menu():
+    while True:
+
+        choice = eg.buttonbox(
+            "Welcome to the Clothing Shopping List!",
+            "Main Menu",
+            choices=["Add Item", "Show List", "Edit Price", "Remove Item", "Clear List", "Help", "Log Out"]
+        )
+        if choice == "Add Item":
+            add_to_list()
+            continue
+        elif choice == "Show List":
+            show_list()
+            continue
+        elif choice == "Edit Price":
+            edit_price()
+            continue
+        elif choice == "Remove Item":
+            remove_from_list()
+            continue
+        elif choice == "Clear List":
+            clear_list()
+            continue
+        elif choice == "Help":
+            show_help()
+            continue
+        elif choice == "Log Out":
+            eg.msgbox("You have been logged out.", "Logged Out")
+        break
+
+# this will start the program
+def start_program():
+    global current_user
+    while True:
+        menu_choice = eg.buttonbox(
+            "Welcome to prince shopping list <3",  # Message
+            "Please choose one to use my shopping program:",  # Title
+            choices=["Sign In", "Sign Up", "Quit"]  # Only choices no third unnamed argument
+        )
+
+        if menu_choice == "Sign In":
+            user = sign_in()
+            if user:
+                current_user = user
+                open_menu()
+                current_user = None  # reset on logout
+        elif menu_choice == "Sign Up":
+            create_account()
+        elif menu_choice == "Quit":
+            eg.msgbox("Thank you for using my program! have a great day!! ", "Exit")
+            break
+
+start_program()
